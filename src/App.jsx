@@ -2,34 +2,36 @@ import { useState } from "react";
 import "./App.css";
 
 function App() {
-  // use state cria uma variável e uma função para mudar essa variável
-  // serve para armazenar estados
-  // este aqui armazena o pokemon
-  const [pokemon, setPokemon] = useState(null);
-  // este aqui armazena se está com loading ou nao
+  const [cep, setCep] = useState("");
+  const [endereco, setEndereco] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState("");
 
-  // esta é a função que busca um pokemon na API dos Pokemons
-  async function buscarPokemonAleatorio() {
-    // gera um número "aleatório"
-    const id = Math.floor(Math.random() * 1025) + 1;
+  async function buscarCep() {
+    if (!cep) {
+      setErro("Digite um CEP.");
+      return;
+    }
 
     setLoading(true);
+    setErro("");
+    setEndereco(null);
 
     try {
-      // faz o fetch na api dos pokemons
-      // eu sei que é este o link pois é o que a documentação me mostra
       const resposta = await fetch(
-        `https://pokeapi.co/api/v2/pokemon/${id}`
+        `https://viacep.com.br/ws/${cep}/json/`
       );
 
-      // pego a resposta em json e armazeno como objeto javascript
       const dados = await resposta.json();
 
-      // armazeno os dados do pokemon na variavel "pokemon"
-      setPokemon(dados);
+      if (dados.erro) {
+        setErro("CEP não encontrado.");
+        return;
+      }
+
+      setEndereco(dados);
     } catch (erro) {
-      console.error("Erro ao buscar Pokémon:", erro);
+      setErro("Erro ao buscar o CEP.");
     } finally {
       setLoading(false);
     }
@@ -37,23 +39,30 @@ function App() {
 
   return (
     <main>
-      <h1>Pokémon Aleatório</h1>
+      <h1>Buscar CEP</h1>
 
-      <button onClick={buscarPokemonAleatorio}>
-        Buscar Pokémon
+      <input
+        type="text"
+        placeholder="Digite o CEP"
+        value={cep}
+        onChange={(event) => setCep(event.target.value)}
+      />
+
+      <button onClick={buscarCep}>
+        Buscar
       </button>
-      {/* O parágrafo só aparece quando loading é true */}
+
       {loading && <p>Carregando...</p>}
 
-      {/* quando pokemon for true E loading for false */}
-      {pokemon && !loading && (
-        <div>
-          <img
-            src={pokemon.sprites.front_default}
-            alt={pokemon.name}
-          />
+      {erro && <p>{erro}</p>}
 
-          <h2>{pokemon.name}</h2>
+      {endereco && (
+        <div>
+          <p><strong>CEP:</strong> {endereco.cep}</p>
+          <p><strong>Rua:</strong> {endereco.logradouro}</p>
+          <p><strong>Bairro:</strong> {endereco.bairro}</p>
+          <p><strong>Cidade:</strong> {endereco.localidade}</p>
+          <p><strong>Estado:</strong> {endereco.uf}</p>
         </div>
       )}
     </main>
